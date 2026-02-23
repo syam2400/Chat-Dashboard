@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const auth = require('../middleware/authMiddleware');
 
@@ -22,7 +23,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const bcrypt = require('bcryptjs');
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
