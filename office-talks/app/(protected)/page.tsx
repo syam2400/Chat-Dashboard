@@ -56,12 +56,8 @@ export default function Home() {
       <Grid container spacing={3}>
         {cards.map((card, index) => (
           <Grid
-            item
-            xs={12}
-            sm={6}
-            md={4}
-            lg={3}
-            key={index}
+           key={index}
+           size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
           >
             <Card
               sx={{
