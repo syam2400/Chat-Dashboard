@@ -26,7 +26,7 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-auth-token'],
+  allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'],
 }));
 
 app.use(express.json()); // parse JSON bodies
@@ -38,6 +38,7 @@ app.get('/', (req, res) => {
 // mount routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/user', require('./routes/users')); // Alias for /api/user/profile compatibility
 
 // health check endpoint
 app.get('/health', (req, res) => {
