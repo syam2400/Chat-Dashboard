@@ -17,6 +17,7 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { apiClient } from "../../../lib/api";
+import Toast from "../../../components/Toast";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -29,33 +30,44 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const handleSignup = async () => {
-    // simple front‑end validation
     if (!name || !email || password.length < 4) {
       setError("Please fill all fields and use a password of at least 4 characters");
       return;
     }
-
     try {
       const res = await apiClient.post("/api/auth/signup", {
         name,
         email,
         password,
       });
-
-      // axios throws for non-2xx status codes, so we arrive here only on success
       const data = res.data;
-      // save token if the API returns one
       if (data?.token) {
-        sessionStorage.setItem("auth-token", data.token);
+        sessionStorage.setItem(
+          "User-Details",
+          JSON.stringify({
+            name: data.user?.name,
+            email: data.user?.email,
+            token: data.token,
+          })
+        );
+        document.cookie = `auth-token=${data.token}; path=/`;
+        setToastMsg("Signup successful!");
+        setToastOpen(true);
+        setTimeout(() => {
+          router.push("/");
+        }, 1200);
+      } else {
+        setToastMsg("Signup successful! Please login.");
+        setToastOpen(true);
+        setTimeout(() => {
+          router.push("/auth/login");
+        }, 1200);
       }
-
-      // still set cookie for compatibility
-      document.cookie = "auth-token=logged-in; path=/";
-      router.push("/");
     } catch (err: any) {
-      // axios stores message in err.response?.data or err.message
       const message =
         err.response?.data?.message || err.response?.data || err.message;
       setError(message || "Signup error");
@@ -157,6 +169,13 @@ export default function SignupPage() {
             <Typography variant="body2">
               Already have an account? <Link href="/auth/login">Login</Link>
             </Typography>
+
+            <Toast
+              open={toastOpen}
+              message={toastMsg}
+              severity="success"
+              onClose={() => setToastOpen(false)}
+            />
           </Stack>
         </CardContent>
       </Card>

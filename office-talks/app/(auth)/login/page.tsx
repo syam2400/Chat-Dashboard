@@ -12,6 +12,7 @@ import {
   IconButton,
   InputAdornment,
 } from "@mui/material";
+import Toast from "../../../components/Toast";
 
 import LockIcon from "@mui/icons-material/Lock";
 import Visibility from "@mui/icons-material/Visibility";
@@ -22,37 +23,44 @@ import { useRouter} from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
-
   const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
 
   const handleLogin = async () => {
     if (!email || !password) {
       setError("Please enter email and password");
       return;
     }
-
     try {
       const res = await apiClient.post("/api/auth/login", {
         email,
         password,
       });
       const data = res.data;
-      // store token in session storage
       if (data?.token) {
-        sessionStorage.setItem("User-Details", JSON.stringify({
-          'name': data.name,
-          'email': data.email,
-          'token': data.token,
-        }));
+        // Store user info and token
+        sessionStorage.setItem(
+          "User-Details",
+          JSON.stringify({
+            name: data.user?.name,
+            email: data.user?.email,
+            token: data.token,
+          })
+        );
+        document.cookie = `auth-token=${data.token}; path=/`;
+        setToastMsg("Login successful!");
+        setToastOpen(true);
+        setTimeout(() => {
+          router.push("/");
+        }, 1200);
+      } else {
+        setError("Login failed: No token returned");
       }
-
-      document.cookie = "auth-token=logged-in; path=/";
-      router.push("/");
     } catch (err: any) {
       const message =
         err.response?.data?.message || err.response?.data || err.message;
@@ -156,8 +164,15 @@ export default function LoginPage() {
             </Button>
 
             <Typography variant="body2">
-              Don't have an account? <Link href="/signup">Sign up</Link>
+              Don't have an account? <Link href="/auth/signup">Sign up</Link>
             </Typography>
+
+            <Toast
+              open={toastOpen}
+              message={toastMsg}
+              severity="success"
+              onClose={() => setToastOpen(false)}
+            />
 
           </Stack>
 
