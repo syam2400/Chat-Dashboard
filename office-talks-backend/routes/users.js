@@ -3,9 +3,15 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const auth = require('../middleware/authMiddleware');
+const multer = require("multer");
+
 
 // protect all user routes
 router.use(auth);
+
+const streamifier = require("streamifier");
+const cloudinary = require("../config/cloudinary");
+const upload = require("../middleware/upload");
 
 // @route    POST api/users
 // @desc     Create a new user (admin or authenticated use)
@@ -125,45 +131,60 @@ router.put('/profile', async (req, res) => {
 // @route    PUT api/users/profile-image
 // @desc     Upload/update user profile image (accepts base64 or file)
 // @access   Private
-router.put('/profile-image', async (req, res) => {
-  try {
-    const userId = req.user?.id;
+router.put(
+  "/profile-image",
+  upload.single("profileImage"),
+  async (req, res) => {
+    try {
+      const userId = req.user?.id;
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized - no user ID in token' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Handle base64 image from request body
-    const { profileImage } = req.body;
-    
-    if (!profileImage) {
-      return res.status(400).json({ message: 'No image data provided' });
-    }
-
-    // Store the image (base64 string or file buffer)
-    user.profileImage = profileImage;
-    await user.save();
-
-    res.json({
-      success: true,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        profileImage: user.profileImage,
-        date: user.date
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Upload to Cloudinary
+      const streamUpload = () => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "user_profiles",
+            },
+            (error, result) => {
+              if (result) resolve(result);
+              else reject(error);
+            }
+          );
+
+          streamifier.createReadStream(req.file.buffer).pipe(stream);
+        });
+      };
+
+      const result = await streamUpload();
+
+      // Save URL in DB
+      const user = await User.findById(userId);
+      user.profileImage = result.secure_url;
+      await user.save();
+
+      res.json({
+        success: true,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          profileImage: user.profileImage,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Server error");
+    }
   }
-});
+);
 
 // @route    GET api/users
 // @desc     Get all users (no password)
@@ -228,6 +249,23 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
+  }
+});
+
+router.get("/all-users", auth, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

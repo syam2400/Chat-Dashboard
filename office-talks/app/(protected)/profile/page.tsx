@@ -223,8 +223,10 @@ export default function ProfilePage() {
                   component="label"
                   color="primary"
                 >
-
-                  <PhotoCamera />
+              {(editMode &&  
+              <PhotoCamera  />
+              )}
+                 
 
                   <input
                     hidden
