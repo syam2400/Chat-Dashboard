@@ -252,7 +252,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.get("/all-users", auth, async (req, res) => {
+router.get("/all-users", async (req, res) => {
   try {
     const users = await User.find()
       .select("-password")
