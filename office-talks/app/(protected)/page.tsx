@@ -26,7 +26,7 @@ export default function Home() {
       title: "Chats",
       description: "View and manage office chats",
       icon: <ChatIcon fontSize="large" />,
-      path: "/chats",
+      path: "/chat",
     },
     {
       title: "Users",
