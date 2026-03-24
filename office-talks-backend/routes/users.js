@@ -186,6 +186,24 @@ router.put(
   }
 );
 
+router.get("/all-users", async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // @route    GET api/users
 // @desc     Get all users (no password)
 // @access   Private
@@ -252,21 +270,5 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.get("/all-users", async (req, res) => {
-  try {
-    const users = await User.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      count: users.length,
-      users,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 module.exports = router;
