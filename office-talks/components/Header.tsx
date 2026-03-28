@@ -31,13 +31,50 @@ import { useNotifications } from "@/context/NotificationContext";
 
 const Header = () => {
   const router = useRouter();
- const { notifications } = useNotifications();
+  const { notifications } = useNotifications();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
+
+  const [chatAnchor, setChatAnchor] = useState<null | HTMLElement>(null);
+
+  const openChatMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setChatAnchor(event.currentTarget);
+  };
+
+  const closeChatMenu = () => {
+    setChatAnchor(null);
+  };
+
+  const getUser = () => {
+    const userDetails =
+      sessionStorage.getItem("User-Details") ||
+      localStorage.getItem("User-Details");
+
+    return userDetails ? JSON.parse(userDetails) : null;
+  };
+
+  const currentUser = getUser();
+
+  const chatNotifications = notifications.filter(
+    (n: any) =>
+      n.type === "USER_LOGIN" &&
+      currentUser?.name !== n.user?.name
+  );
+
+  const chatCount = chatNotifications.length;
+
+  const uniqueUsersMap = new Map();
+
+  chatNotifications.forEach((n: any) => {
+    uniqueUsersMap.set(n.user.id, n.user);
+  });
+
+  const onlineUsers = Array.from(uniqueUsersMap.values());
+
 
   const openProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -121,7 +158,7 @@ const Header = () => {
             </Typography>
             <Box className="home-icon" sx={{ opacity: 0, transition: 'opacity 0.2s, margin-left 0.2s', ml: 0 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 2L2 8.5V18H7V13H13V18H18V8.5L10 2Z" stroke="#3b82f6" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M10 2L2 8.5V18H7V13H13V18H18V8.5L10 2Z" stroke="#3b82f6" strokeWidth="1.5" strokeLinejoin="round" />
               </svg>
             </Box>
           </Box>
@@ -160,11 +197,69 @@ const Header = () => {
           )}
 
           {/* Chat */}
-          <IconButton size="small">
-            <Badge badgeContent={4} color="primary">
+          <IconButton size="small" onClick={openChatMenu}>
+            <Badge badgeContent={chatCount} color="success">
               <ChatIcon fontSize="small" />
             </Badge>
           </IconButton>
+
+          <Menu
+            anchorEl={chatAnchor}
+            open={Boolean(chatAnchor)}
+            onClose={closeChatMenu}
+            PaperProps={{
+              sx: { width: 280, maxHeight: 350 }
+            }}
+          >
+            {onlineUsers.length === 0 ? (
+              <MenuItem>No users online</MenuItem>
+            ) : (
+              onlineUsers.map((user: any) => (
+                <MenuItem
+                  key={user.id}
+                  onClick={() => {
+                    router.push(`/chat`);
+                    closeChatMenu();
+                  }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    py: 1,
+                  }}
+                >
+                  {/* Avatar with online dot */}
+                  <Box sx={{ position: "relative" }}>
+                    <Avatar sx={{ width: 32, height: 32 }}>
+                      {user.name?.[0]?.toUpperCase()}
+                    </Avatar>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        right: 0,
+                        width: 10,
+                        height: 10,
+                        bgcolor: "#22c55e",
+                        borderRadius: "50%",
+                        border: "2px solid white",
+                      }}
+                    />
+                  </Box>
+
+                  {/* User info */}
+                  <Box>
+                    <Typography fontSize="14px" fontWeight={500}>
+                      {user.name}
+                    </Typography>
+                    <Typography fontSize="11px" color="gray">
+                      Online
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))
+            )}
+          </Menu>
 
           {/* Notifications */}
           <IconButton
@@ -177,28 +272,28 @@ const Header = () => {
           </IconButton>
 
           {/* Notifications Menu */}
-         <Menu
-          anchorEl={notificationAnchor}
-          open={Boolean(notificationAnchor)}
-          onClose={closeMenus}
-        >
-          {notifications.length === 0 ? (
-            <MenuItem>No notifications</MenuItem>
-          ) : (
-            notifications.slice(0, 5).map((notif:any, index :any) => (
-              <MenuItem key={index}>
-                <Box>
-                  <Typography fontSize="14px">
-                    {notif.message}
-                  </Typography>
-                  <Typography fontSize="11px" color="gray">
-                    {notif.time || "Just now"}
-                  </Typography>
-                </Box>
-              </MenuItem>
-            ))
-          )}
-        </Menu>
+          <Menu
+            anchorEl={notificationAnchor}
+            open={Boolean(notificationAnchor)}
+            onClose={closeMenus}
+          >
+            {notifications.length === 0 ? (
+              <MenuItem>No notifications</MenuItem>
+            ) : (
+              notifications.slice(0, 5).map((notif: any, index: any) => (
+                <MenuItem key={index}>
+                  <Box>
+                    <Typography fontSize="14px">
+                      {notif.message}
+                    </Typography>
+                    <Typography fontSize="11px" color="gray">
+                      {notif.time || "Just now"}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))
+            )}
+          </Menu>
 
           {/* Settings (hide on very small screens) */}
           {!isMobile && (
