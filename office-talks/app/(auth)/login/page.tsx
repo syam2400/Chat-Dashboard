@@ -164,7 +164,7 @@ export default function LoginPage() {
             </Button>
 
             <Typography variant="body2">
-              Don't have an account? <Link href="/auth/signup">Sign up</Link>
+              Don't have an account? <Link href="/signup">Sign up</Link>
             </Typography>
 
             <Toast

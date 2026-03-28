@@ -27,10 +27,11 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 
 import { useRouter } from "next/navigation";
+import { useNotifications } from "@/context/NotificationContext";
 
 const Header = () => {
   const router = useRouter();
-
+ const { notifications } = useNotifications();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -170,21 +171,34 @@ const Header = () => {
             size="small"
             onClick={openNotificationMenu}
           >
-            <Badge badgeContent={7} color="error">
+            <Badge badgeContent={notifications.length} color="error">
               <NotificationsIcon fontSize="small" />
             </Badge>
           </IconButton>
 
           {/* Notifications Menu */}
-          <Menu
-            anchorEl={notificationAnchor}
-            open={Boolean(notificationAnchor)}
-            onClose={closeMenus}
-          >
-            <MenuItem>New message</MenuItem>
-            <MenuItem>Server updated</MenuItem>
-            <MenuItem>New user registered</MenuItem>
-          </Menu>
+         <Menu
+          anchorEl={notificationAnchor}
+          open={Boolean(notificationAnchor)}
+          onClose={closeMenus}
+        >
+          {notifications.length === 0 ? (
+            <MenuItem>No notifications</MenuItem>
+          ) : (
+            notifications.slice(0, 5).map((notif:any, index :any) => (
+              <MenuItem key={index}>
+                <Box>
+                  <Typography fontSize="14px">
+                    {notif.message}
+                  </Typography>
+                  <Typography fontSize="11px" color="gray">
+                    {notif.time || "Just now"}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))
+          )}
+        </Menu>
 
           {/* Settings (hide on very small screens) */}
           {!isMobile && (

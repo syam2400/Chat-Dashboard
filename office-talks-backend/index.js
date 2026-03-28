@@ -2,40 +2,65 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const http = require("http");
+const socketAuth = require("./middleware/socketAuth");
+const { Server } = require("socket.io");
 
 const app = express();
+const server = http.createServer(app);
 
-// Validate required environment variables
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
-requiredEnvVars.forEach((envVar) => {
-  if (!process.env[envVar]) {
-    console.error(`❌ Missing required environment variable: ${envVar}`);
-    process.exit(1);
-  }
-});
-
-// connect to database
-connectDB();
-
-// CORS configuration - restrict to allowed origins
+// CORS config
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000', 'http://localhost:5000','https://office-talks.vercel.app'];
 
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
+});
+
+// ✅ Apply socket auth ONCE
+socketAuth(io);
+
+// ✅ Global access
+global.io = io;
+
+// ✅ Notification helper
+global.sendNotification = (data) => {
+  io.emit("notification", data);
+};
+
+// ✅ Connection
+io.on("connection", (socket) => {
+  console.log("🟢 User connected:", socket.user?.userId);
+
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.user?.userId);
+  });
+});
+
+// ENV validation
+['MONGO_URI', 'JWT_SECRET'].forEach((envVar) => {
+  if (!process.env[envVar]) {
+    console.error(`❌ Missing env: ${envVar}`);
+    process.exit(1);
+  }
+});
+
+// DB
+connectDB();
+
+// Middleware
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-auth-token', 'Authorization'],
 }));
 
-app.use(express.json()); // parse JSON bodies
+app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('API running');
-});
-
-// mount routes
+// Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/user', require('./routes/users')); // Alias for /api/user/profile compatibility

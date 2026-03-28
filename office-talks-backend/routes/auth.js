@@ -54,6 +54,17 @@ router.post('/signup', async (req, res) => {
 			}
 		});
 
+		// ✅ REAL-TIME NOTIFICATION
+		global.sendNotification({
+			type: "NEW_USER",
+			message: `${user.name} joined`,
+			user: {
+				id: user._id,
+				name: user.name
+			},
+			time: new Date()
+		});
+
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({
@@ -70,7 +81,6 @@ router.post('/login', async (req, res) => {
 
 	try {
 		const user = await User.findOne({ email });
-
 		if (!user) {
 			return res.status(400).json({
 				success: false,
@@ -105,6 +115,17 @@ router.post('/login', async (req, res) => {
 				name: user.name,
 				email: user.email
 			}
+		});
+
+	  // ✅ REAL-TIME NOTIFICATION
+		global.sendNotification({
+			type: "USER_LOGIN",
+			message: `${user.name} logged in`,
+			user: {
+				id: user._id,
+				name: user.name
+			},
+			time: new Date()
 		});
 
 	} catch (error) {

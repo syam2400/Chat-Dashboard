@@ -167,7 +167,7 @@ export default function SignupPage() {
             </Button>
 
             <Typography variant="body2">
-              Already have an account? <Link href="/auth/login">Login</Link>
+              Already have an account? <Link href="/login">Login</Link>
             </Typography>
 
             <Toast

@@ -75,7 +75,7 @@ const Sidebar = () => {
 
         <ListItemButton
           component={Link}
-          href="/chats"
+          href="/chat"
           onClick={() => isMobile && toggleDrawer()}
         >
           <ListItemIcon sx={{ color: "#fff" }}>

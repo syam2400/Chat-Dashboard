@@ -35,10 +35,10 @@ export default function Home() {
       path: "/users",
     },
     {
-      title: "Dashboard",
-      description: "View system overview",
+      title: "Profile",
+      description: "View and manage your profile",
       icon: <DashboardIcon fontSize="large" />,
-      path: "/dashboard",
+      path: "/profile",
     },
     {
       title: "Settings",
