@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -29,6 +29,12 @@ import PersonIcon from "@mui/icons-material/Person";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "@/context/NotificationContext";
 
+interface User {
+  id: string;
+  name: string;
+  [key: string]: any;
+}
+
 const Header = () => {
   const router = useRouter();
   const { notifications } = useNotifications();
@@ -40,6 +46,14 @@ const Header = () => {
     useState<null | HTMLElement>(null);
 
   const [chatAnchor, setChatAnchor] = useState<null | HTMLElement>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const userDetails =
+      sessionStorage.getItem("User-Details") ||
+      localStorage.getItem("User-Details");
+    if (userDetails) setCurrentUser(JSON.parse(userDetails));
+  }, []);
 
   const openChatMenu = (event: React.MouseEvent<HTMLElement>) => {
     setChatAnchor(event.currentTarget);
@@ -48,16 +62,6 @@ const Header = () => {
   const closeChatMenu = () => {
     setChatAnchor(null);
   };
-
-  const getUser = () => {
-    const userDetails =
-      sessionStorage.getItem("User-Details") ||
-      localStorage.getItem("User-Details");
-
-    return userDetails ? JSON.parse(userDetails) : null;
-  };
-
-  const currentUser = getUser();
 
   const chatNotifications = notifications.filter(
     (n: any) =>
@@ -218,7 +222,7 @@ const Header = () => {
                 <MenuItem
                   key={user.id}
                   onClick={() => {
-                    router.push(`/chat`);
+                    router.push('/chat');
                     closeChatMenu();
                   }}
                   sx={{
