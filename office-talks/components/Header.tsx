@@ -64,7 +64,7 @@ const Header = () => {
 
     router.push("/login");
   };
-
+  console.log("Header notifications:", notifications);
   return (
     <AppBar
       position="sticky"

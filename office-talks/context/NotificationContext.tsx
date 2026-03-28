@@ -14,14 +14,26 @@ const NotificationContext = createContext<any>(null);
 export const NotificationProvider = ({ children }: any) => {
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
 
+    const getToken = () => {
+    const userDetails =
+      sessionStorage.getItem("User-Details") ||
+      localStorage.getItem("User-Details");
+
+    return userDetails ? JSON.parse(userDetails).token : null;
+  };
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = getToken();
     if (!token) return;
 
     const socket = connectSocket(token);
 
     socket.on("connect", () => {
       console.log("🟢 Connected:", socket.id);
+    });
+
+      // ✅ ADD THIS HERE
+    socket.onAny((event, data) => {
+        console.log("📡 EVENT:", event, data);
     });
 
     // ✅ IMPORTANT: prevent duplicate listeners

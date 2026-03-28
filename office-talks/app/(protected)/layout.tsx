@@ -37,65 +37,63 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en">
-      <body>
-        <CssBaseline />
+    <>
+      <CssBaseline />
 
-        {/* Main Layout */}
+      {/* Main Layout */}
+      <Box
+        sx={{
+          display: "flex",
+          minHeight: "100vh",
+          width: "100%",
+          overflowX: "hidden",
+          backgroundColor: "#f1f5f9",
+        }}
+      >
+
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content Area */}
         <Box
           sx={{
+            flexGrow: 1,
             display: "flex",
-            minHeight: "100vh",
-            width: "100%",
-            overflowX: "hidden",
-            backgroundColor: "#f1f5f9",
+            flexDirection: "column",
+            minWidth: 0,
           }}
         >
 
-          {/* Sidebar */}
-          <Sidebar />
+          {/* Header */}
+          <Header />
 
-          {/* Main Content Area */}
+          {/* Page Content */}
           <Box
+            component="main"
             sx={{
               flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              minWidth: 0,
+
+              // ✅ Responsive padding
+              p: {
+                xs: 2,
+                sm: 3,
+                md: 4,
+              },
+
+              width: "100%",
+              maxWidth: "100%",
+              overflowX: "hidden",
             }}
           >
-
-            {/* Header */}
-            <Header />
-
-            {/* Page Content */}
-            <Box
-              component="main"
-              sx={{
-                flexGrow: 1,
-
-                // ✅ Responsive padding
-                p: {
-                  xs: 2,
-                  sm: 3,
-                  md: 4,
-                },
-
-                width: "100%",
-                maxWidth: "100%",
-                overflowX: "hidden",
-              }}
-            >
-              {children}
-            </Box>
-
-            {/* Footer */}
-            <Footer />
-
+            {children}
           </Box>
 
+          {/* Footer */}
+          <Footer />
+
         </Box>
-      </body>
-    </html>
+
+      </Box>
+    </>
   );
 }
