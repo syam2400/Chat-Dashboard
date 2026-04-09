@@ -204,8 +204,8 @@ export default function ProfilePage() {
               <Avatar
                 src={user.profileImage || ""}
                 sx={{
-                  width: 120,
-                  height: 120,
+                  width: 150,
+                  height: 180,
                   margin: "auto",
                   border: "4px solid white",
                   fontSize: 40,

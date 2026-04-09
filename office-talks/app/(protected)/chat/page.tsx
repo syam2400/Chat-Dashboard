@@ -161,7 +161,7 @@ export default function ChatHomePage() {
                 sx={{
                   mr: 2,
                   width: 55,
-                  height: 55,
+                  height: 65,
                   bgcolor: "#2a5298",
                   boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
                 }}

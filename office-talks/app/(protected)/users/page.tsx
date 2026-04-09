@@ -98,7 +98,7 @@ export default function UsersPage() {
                   src={user.profileImage || ""}
                   sx={{
                     width: 80,
-                    height: 80,
+                    height: 100,
                     margin: "auto",
                     mb: 1,
                     bgcolor: "#1976d2",

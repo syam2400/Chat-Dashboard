@@ -122,6 +122,7 @@ export default function LoginPage() {
               variant="outlined"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              InputLabelProps={{ shrink: true }} 
             />
 
             {/* Password */}
@@ -132,6 +133,7 @@ export default function LoginPage() {
               variant="outlined"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              InputLabelProps={{ shrink: true }} 
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
