@@ -13,6 +13,7 @@ const NotificationContext = createContext<any>(null);
 
 export const NotificationProvider = ({ children }: any) => {
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
     const getToken = () => {
     const userDetails =
@@ -36,6 +37,10 @@ export const NotificationProvider = ({ children }: any) => {
         console.log("📡 EVENT:", event, data);
     });
 
+    socket.on("online_users", (users: any[]) => {
+      setOnlineUsers(users);
+    });
+
     // ✅ IMPORTANT: prevent duplicate listeners
     socket.off("notification");
 
@@ -47,11 +52,12 @@ export const NotificationProvider = ({ children }: any) => {
 
     return () => {
       socket.off("notification");
+      socket.off("online_users");
     };
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ notifications }}>
+    <NotificationContext.Provider value={{ notifications , onlineUsers }}>
       {children}
     </NotificationContext.Provider>
   );

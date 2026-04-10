@@ -37,7 +37,7 @@ interface User {
 
 const Header = () => {
   const router = useRouter();
-  const { notifications } = useNotifications();
+  const { notifications, onlineUsers } = useNotifications();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -63,22 +63,25 @@ const Header = () => {
     setChatAnchor(null);
   };
 
-  const chatNotifications = notifications.filter(
-    (n: any) =>
-      n.type === "USER_LOGIN" &&
-      currentUser?.name !== n.user?.name
+  // const chatNotifications = notifications.filter(
+  //   (n: any) =>
+  //     n.type === "USER_LOGIN" &&
+  //     currentUser?.name !== n.user?.name
+  // );
+  
+    const filteredUsers = onlineUsers.filter(
+    (u:any) => u.userId !== currentUser?.id
   );
 
-  const chatCount = chatNotifications.length;
+  const chatCount = filteredUsers.length;
 
-  const uniqueUsersMap = new Map();
 
-  chatNotifications.forEach((n: any) => {
-    uniqueUsersMap.set(n.user.id, n.user);
-  });
+  // chatNotifications.forEach((n: any) => {
+  //   uniqueUsersMap.set(n.user.id, n.user);
+  // });
 
-  const onlineUsers = Array.from(uniqueUsersMap.values());
 
+console.log("Online users in header------------:", onlineUsers);
 
   const openProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -97,15 +100,15 @@ const Header = () => {
 
   // ✅ Proper logout function
   const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("User-Details");
+    localStorage.removeItem("User-Details");
 
     document.cookie =
       "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
     router.push("/login");
   };
-  console.log("Header notifications:", notifications);
+
   return (
     <AppBar
       position="sticky"
@@ -215,12 +218,12 @@ const Header = () => {
               sx: { width: 280, maxHeight: 350 }
             }}
           >
-            {onlineUsers.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <MenuItem>No users online</MenuItem>
             ) : (
-              onlineUsers.map((user: any) => (
+              filteredUsers.map((user: any) => (
                 <MenuItem
-                  key={user.id}
+                  key={user.userId}
                   onClick={() => {
                     router.push('/chat');
                     closeChatMenu();
