@@ -11,8 +11,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const http = require("http");
-const socketAuth = require("./middleware/socketAuth");
-const { Server } = require("socket.io");
+const { initSocket } = require("./sockets");
 const helmet = require('helmet');
 const app = express();
 
@@ -87,32 +86,8 @@ app.use((err, req, res, next) => {
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
-});
-
-// ✅ Apply socket auth ONCE
-socketAuth(io);
-
-// ✅ Global access
-global.io = io;
-
-// ✅ Notification helper
-global.sendNotification = (data) => {
-  io.emit("notification", data);
-};
-
-// ✅ Connection
-io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.user?.userId);
-
-  socket.on("disconnect", () => {
-    console.log("🔴 User disconnected:", socket.user?.userId);
-  });
-});
+// ✅ Initialize socket here (IMPORTANT)
+initSocket(server, allowedOrigins);
 
 const PORT = process.env.PORT || 5000;
 // 🔥 Start server only after DB connects

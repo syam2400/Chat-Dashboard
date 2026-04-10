@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
+const sendNotification = require("../sockets/notify");
 
 // ================= SIGNUP =================
 router.post('/signup', async (req, res) => {
@@ -33,7 +33,8 @@ router.post('/signup', async (req, res) => {
 
 		// Create token payload
 		const payload = {
-			userId: user._id
+			userId: user._id,
+			name: user.name,
 		};
 
 		// Generate token
@@ -54,16 +55,20 @@ router.post('/signup', async (req, res) => {
 			}
 		});
 
-		// ✅ REAL-TIME NOTIFICATION
-		global.sendNotification({
-			type: "NEW_USER",
-			message: `${user.name} joined`,
-			user: {
-				id: user._id,
-				name: user.name
-			},
-			time: new Date()
-		});
+// ✅ THEN send notification (safe)
+    try {
+      sendNotification({
+        type: "NEW_USER",
+        message: `${user.name} joined`,
+        user: {
+          id: user._id,
+          name: user.name
+        },
+        time: new Date()
+      });
+    } catch (err) {
+      console.error("Notification error:", err);
+    }
 
 	} catch (error) {
 		console.error(error);
@@ -98,7 +103,8 @@ router.post('/login', async (req, res) => {
 		}
 
 		const payload = {
-			userId: user._id
+			userId: user._id,
+			name: user.name,
 		};
 
 		const token = jwt.sign(
@@ -118,15 +124,15 @@ router.post('/login', async (req, res) => {
 		});
 
 	  // ✅ REAL-TIME NOTIFICATION
-		global.sendNotification({
-			type: "USER_LOGIN",
-			message: `${user.name} logged in`,
-			user: {
-				id: user._id,
-				name: user.name
-			},
-			time: new Date()
-		});
+		// global.sendNotification({
+		// 	type: "USER_LOGIN",
+		// 	message: `${user.name} logged in`,
+		// 	user: {
+		// 		id: user._id,
+		// 		name: user.name
+		// 	},
+		// 	time: new Date()
+		// });
 
 	} catch (error) {
 		console.error(error);
