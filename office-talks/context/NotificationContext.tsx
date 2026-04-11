@@ -2,62 +2,57 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { connectSocket } from "@/lib/socket";
-
-type NotificationType = {
-  message: string;
-  type?: string;
-  time?: string;
-};
+import { useAuth } from "./AuthContext";
 
 const NotificationContext = createContext<any>(null);
 
 export const NotificationProvider = ({ children }: any) => {
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
+  const { user } = useAuth();
+
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
-    const getToken = () => {
-    const userDetails =
-      sessionStorage.getItem("User-Details") ||
-      localStorage.getItem("User-Details");
-
-    return userDetails ? JSON.parse(userDetails).token : null;
-  };
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    if (!user?.token) return;
 
-    const socket = connectSocket(token);
+    const socket = connectSocket(user.token);
 
     socket.on("connect", () => {
       console.log("🟢 Connected:", socket.id);
     });
 
-      // ✅ ADD THIS HERE
-    socket.onAny((event, data) => {
-        console.log("📡 EVENT:", event, data);
+    socket.onAny((event: any, data: any) => {
+      console.log("📡 EVENT:", event, data);
     });
 
     socket.on("online_users", (users: any[]) => {
       setOnlineUsers(users);
     });
 
-    // ✅ IMPORTANT: prevent duplicate listeners
-    socket.off("notification");
+    socket.on("notification", (data: any) => {
+      if (data.user?.email === user?.email) return;
 
-    socket.on("notification", (data: NotificationType) => {
-      console.log("🔔 Notification:", data);
+      setNotifications((prev) => {
+        const exists = prev.some(
+          (n) =>
+            n.type === data.type &&
+            n.user?.email === data.user?.email
+        );
 
-      setNotifications((prev) => [data, ...prev]);
+        if (exists) return prev;
+
+        return [data, ...prev];
+      });
     });
 
     return () => {
-      socket.off("notification");
-      socket.off("online_users");
+       socket.off("online_users");
+       socket.off("notification");
     };
-  }, []);
+  }, [user]); // runs when user logs in
 
   return (
-    <NotificationContext.Provider value={{ notifications , onlineUsers }}>
+    <NotificationContext.Provider value={{ notifications, onlineUsers }}>
       {children}
     </NotificationContext.Provider>
   );

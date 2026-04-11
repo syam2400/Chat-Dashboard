@@ -1,5 +1,6 @@
 // app/layout.tsx
 import { NotificationProvider } from "@/context/NotificationContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
   children,
@@ -9,9 +10,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <NotificationProvider>
-          {children}
-        </NotificationProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            {children}
+          </NotificationProvider>
+        </AuthProvider>
       </body>
     </html>
   );

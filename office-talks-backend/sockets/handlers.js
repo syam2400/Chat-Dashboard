@@ -1,30 +1,30 @@
-const onlineUsers = new Map(); // userId -> user object
+const onlineUsers = new Map();
 
 module.exports = (io) => {
-
   io.on("connection", (socket) => {
     const user = socket.user;
 
-    console.log("🟢 Connected:----?>", user);
+    console.log("🟢 Connected:", user);
 
     if (user?.userId) {
-      // ✅ Add user
+      const isNewUser = !onlineUsers.has(user.userId);
+
+      // ✅ Always update user
       onlineUsers.set(user.userId, user);
 
-      // ✅ Send full list to ALL users
+      // ✅ Always send updated list
       io.emit("online_users", [...onlineUsers.values()]);
 
-      // ✅ Notify others (not self)
-      socket.broadcast.emit("notification", {
-        type: "USER_LOGIN",
-        user,
-        message: `${user.name} logged in`,
-        time: new Date(),
-      });
+      // ✅ Only notify if truly new
+      if (isNewUser) {
+        socket.broadcast.emit("notification", {
+          type: "USER_LOGIN",
+          user,
+          message: `${user.name} logged in`,
+          time: new Date(),
+        });
+      }
     }
-
-    // ✅ Send current list to NEW user
-    // socket.emit("online_users",  [...onlineUsers.values()]);
 
     socket.on("disconnect", () => {
       console.log("🔴 Disconnected:", user?.userId);
@@ -32,8 +32,7 @@ module.exports = (io) => {
       if (user?.userId) {
         onlineUsers.delete(user.userId);
 
-        // ✅ Update everyone
-        io.emit("online_users", Array.from(onlineUsers.values()));
+        io.emit("online_users", [...onlineUsers.values()]);
       }
     });
   });

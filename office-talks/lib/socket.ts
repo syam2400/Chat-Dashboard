@@ -12,6 +12,13 @@ export const connectSocket = (token: string) => {
   return socket;
 };
 
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};
+
 export const getSocket = () => {
   if (!socket) {
     throw new Error("Socket not connected. Call connectSocket first.");

@@ -28,6 +28,7 @@ import PersonIcon from "@mui/icons-material/Person";
 
 import { useRouter } from "next/navigation";
 import { useNotifications } from "@/context/NotificationContext";
+import { useAuth } from "@/context/AuthContext";
 
 interface User {
   id: string;
@@ -37,6 +38,7 @@ interface User {
 
 const Header = () => {
   const router = useRouter();
+  const { logout } = useAuth();
   const { notifications, onlineUsers } = useNotifications();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -47,41 +49,39 @@ const Header = () => {
 
   const [chatAnchor, setChatAnchor] = useState<null | HTMLElement>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [chatCount, setChatCount] = useState(0);
+  const [filteredOnlineUsers, setFilteredOnlineUsers] = useState<any[]>([]);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
     const userDetails =
       sessionStorage.getItem("User-Details") ||
       localStorage.getItem("User-Details");
     if (userDetails) setCurrentUser(JSON.parse(userDetails));
+
   }, []);
+
+  useEffect(() => {
+    const filtered = onlineUsers.filter(
+      (u: any) => u.email !== currentUser?.email
+    );
+
+    setFilteredOnlineUsers(filtered);
+    setChatCount(filtered.length);
+    setNotificationCount(notifications.length);
+  }, [onlineUsers, currentUser, notifications]);
+
+
 
   const openChatMenu = (event: React.MouseEvent<HTMLElement>) => {
     setChatAnchor(event.currentTarget);
+    setChatCount(0); // Reset chat count when menu is opened
   };
 
   const closeChatMenu = () => {
     setChatAnchor(null);
   };
 
-  // const chatNotifications = notifications.filter(
-  //   (n: any) =>
-  //     n.type === "USER_LOGIN" &&
-  //     currentUser?.name !== n.user?.name
-  // );
-  
-    const filteredUsers = onlineUsers.filter(
-    (u:any) => u.userId !== currentUser?.id
-  );
-
-  const chatCount = filteredUsers.length;
-
-
-  // chatNotifications.forEach((n: any) => {
-  //   uniqueUsersMap.set(n.user.id, n.user);
-  // });
-
-
-console.log("Online users in header------------:", onlineUsers);
 
   const openProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -91,6 +91,7 @@ console.log("Online users in header------------:", onlineUsers);
     event: React.MouseEvent<HTMLElement>
   ) => {
     setNotificationAnchor(event.currentTarget);
+    setNotificationCount(0); // Reset notification count when menu is opened
   };
 
   const closeMenus = () => {
@@ -100,13 +101,8 @@ console.log("Online users in header------------:", onlineUsers);
 
   // ✅ Proper logout function
   const handleLogout = () => {
-    sessionStorage.removeItem("User-Details");
-    localStorage.removeItem("User-Details");
-
-    document.cookie =
-      "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-    router.push("/login");
+    logout();               // ✅ clear session
+    router.replace("/login"); // ✅ redirect Call the logout page logic to clear session and redirect
   };
 
   return (
@@ -218,10 +214,10 @@ console.log("Online users in header------------:", onlineUsers);
               sx: { width: 280, maxHeight: 350 }
             }}
           >
-            {filteredUsers.length === 0 ? (
+            {filteredOnlineUsers?.length === 0 ? (
               <MenuItem>No users online</MenuItem>
             ) : (
-              filteredUsers.map((user: any) => (
+              filteredOnlineUsers?.map((user: any) => (
                 <MenuItem
                   key={user.userId}
                   onClick={() => {
@@ -273,7 +269,7 @@ console.log("Online users in header------------:", onlineUsers);
             size="small"
             onClick={openNotificationMenu}
           >
-            <Badge badgeContent={notifications.length} color="error">
+            <Badge badgeContent={notificationCount} color="error">
               <NotificationsIcon fontSize="small" />
             </Badge>
           </IconButton>
@@ -284,7 +280,7 @@ console.log("Online users in header------------:", onlineUsers);
             open={Boolean(notificationAnchor)}
             onClose={closeMenus}
           >
-            {notifications.length === 0 ? (
+            {notifications?.length === 0 ? (
               <MenuItem>No notifications</MenuItem>
             ) : (
               notifications.slice(0, 5).map((notif: any, index: any) => (

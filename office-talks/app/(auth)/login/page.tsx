@@ -21,9 +21,11 @@ import { apiClient } from "../../../lib/api";
 import { useState } from "react";
 import { useRouter} from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext"
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,20 +46,26 @@ export default function LoginPage() {
       const data = res.data;
       if (data?.token) {
         // Store user info and token
-        sessionStorage.setItem(
-          "User-Details",
-          JSON.stringify({
+        // sessionStorage.setItem(
+        //   "User-Details",
+        //   JSON.stringify({
+        //     name: data.user?.name,
+        //     email: data.user?.email,
+        //     token: data.token,
+        //   })
+        // );
+        login({
             name: data.user?.name,
             email: data.user?.email,
             token: data.token,
-          })
-        );
+          });
+          
         document.cookie = `auth-token=${data.token}; path=/`;
         setToastMsg("Login successful!");
         setToastOpen(true);
         setTimeout(() => {
           router.push("/");
-        }, 1200);
+        }, 800);
       } else {
         setError("Login failed: No token returned");
       }

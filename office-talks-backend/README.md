@@ -221,17 +221,6 @@ Next.js App (office-talks/)
 └── Protected routes with token
 ```
 
-## 🎯 **Interview Talking Points**
-
-1. **Why Express 5+?** Latest features, better TypeScript support
-2. **Real-time Arch?** Socket.io with JWT middleware, global notification system
-3. **Security-First?** Helmet → Rate-limit → Auth → Input validation
-4. **File Upload?** Multer (memory) → Streamifier → Cloudinary (no disk I/O)
-5. **DB Design?** Simple User schema, scalable for chats/messages
-6. **Error Handling?** Global handler + async/await try-catch
-7. **Production?** Compression, proxy trust, configurable CORS/origins
-8. **Scalability?** MongoDB replica set ready, stateless JWT
-
 ## 🔮 **Future Enhancements**
 ```
 [ ] Chat/Message models & Socket rooms
