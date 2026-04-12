@@ -60,6 +60,7 @@ app.use('/api/auth', authLimiter); // only this applies to auth now
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/user', require('./routes/users')); // Alias for /api/user/profile compatibility
+app.use('/api/chats', require('./routes/chats'));
 
 // health check endpoint
 app.get('/health', (req, res) => {

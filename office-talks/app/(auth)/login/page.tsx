@@ -60,7 +60,6 @@ export default function LoginPage() {
             token: data.token,
           });
           
-        document.cookie = `auth-token=${data.token}; path=/`;
         setToastMsg("Login successful!");
         setToastOpen(true);
         setTimeout(() => {

@@ -12,6 +12,7 @@ import {
   Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { useRouter } from "next/navigation";
 
 interface User {
   _id?: string;
@@ -25,6 +26,7 @@ export default function ChatHomePage() {
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const router = useRouter();
 
   const getToken = () => {
     const userDetails =
@@ -140,6 +142,7 @@ export default function ChatHomePage() {
           {filteredUsers.map((user) => (
             <Box
               key={user._id}
+              onClick={() => router.push(`/chat/${user._id}`)}
               sx={{
                 display: "flex",
                 alignItems: "center",

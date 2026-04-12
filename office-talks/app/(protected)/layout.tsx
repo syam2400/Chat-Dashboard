@@ -12,6 +12,8 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function RootLayout({
   children,
@@ -21,20 +23,18 @@ export default function RootLayout({
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { user } = useAuth();  
+  const router = useRouter();
 
   // ✅ Auth check
   useEffect(() => {
-    const token =
-      sessionStorage.getItem("token") ||
-      document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth-token="))
-        ?.split("=")[1];
-
-    if (!token) {
-      window.location.href = "/login";
+    if (!user) {
+      router.replace("/login");        // ✅ replace not href (no flash)
     }
-  }, []);
+  }, [user]);
+
+  // ✅ Don't render layout at all until user is confirmed
+  if (!user) return null;
 
   return (
     <>
