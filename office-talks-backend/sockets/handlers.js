@@ -7,7 +7,7 @@ module.exports = (io) => {
     console.log("🟢 Connected:", user);
 
     if (user?.userId) {
-      const isNewUser = !onlineUsers.has(user.userId);
+      // const isNewUser = !onlineUsers.has(user.userId);
 
       // ✅ Always update user
       onlineUsers.set(user.userId, user);
@@ -15,16 +15,43 @@ module.exports = (io) => {
       // ✅ Always send updated list
       io.emit("online_users", [...onlineUsers.values()]);
 
-      // ✅ Only notify if truly new
-      if (isNewUser) {
-        socket.broadcast.emit("notification", {
-          type: "USER_LOGIN",
-          user,
-          message: `${user.name} logged in`,
-          time: new Date(),
-        });
-      }
     }
+
+        // ✅ Step 4 — Join conversation room
+    socket.on("join_room", (conversationId) => {
+      socket.join(conversationId);
+      console.log(`📦 ${user?.userId} joined room: ${conversationId}`);
+    });
+
+        // ✅ Step 5 — Send message
+    socket.on("send_message", async ({ conversationId, text }) => {
+      try {
+        if (!text?.trim()) return;
+
+        const [message] = await Promise.all([
+          Message.create({
+            conversationId,
+            senderId: user.userId,   // ✅ pulled from socket.user, not client payload
+            text: text.trim(),
+            seenBy: [user.userId],
+          }),
+          Conversation.findByIdAndUpdate(conversationId, {
+            lastMessage: text.trim(),
+            lastMessageAt: new Date(),
+          }),
+        ]);
+
+        io.to(conversationId).emit("new_message", message);
+      } catch (err) {
+        socket.emit("error", { message: "Failed to send message" });
+      }
+    });
+
+        // ✅ Leave room when switching chats
+    socket.on("leave_room", (conversationId) => {
+      socket.leave(conversationId);
+      console.log(`📤 ${user?.userId} left room: ${conversationId}`);
+    });
 
     socket.on("disconnect", () => {
       console.log("🔴 Disconnected:", user?.userId);

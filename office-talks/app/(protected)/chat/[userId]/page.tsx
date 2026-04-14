@@ -64,7 +64,9 @@ export default function ChatPage() {
         const res = await apiClient.get(`/api/user/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setReceiver(res.data?.user || null);
+
+        setReceiver(res?.data || null);
+
       } catch (err) {
         console.error(err);
       }
@@ -72,13 +74,19 @@ export default function ChatPage() {
     if (userId) fetchUser();
   }, [userId]);
 
-  // Fetch messages
+  // Fetch messages 
   useEffect(() => {
     const fetchMessages = async () => {
+        const payload = {
+                        receiverId: userId
+                        };
       try {
-        const res = await apiClient.get(`/api/messages/${userId}`, {
+        const res = await apiClient.post(`/api/chats/create`,
+        payload,
+         {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         setMessages(res.data?.messages || []);
       } catch (err) {
         console.error(err);

@@ -45,26 +45,12 @@ export default function SignupPage() {
         password,
       });
       const data = res.data;
-      if (data?.token) {
-        sessionStorage.setItem(
-          "User-Details",
-          JSON.stringify({
-            name: data.user?.name,
-            email: data.user?.email,
-            token: data.token,
-          })
-        );
-        document.cookie = `auth-token=${data.token}; path=/`;
-        setToastMsg("Signup successful!");
-        setToastOpen(true);
-        setTimeout(() => {
-          router.push("/");
-        }, 1200);
-      } else {
+      if (data?.success) {
+
         setToastMsg("Signup successful! Please login.");
         setToastOpen(true);
         setTimeout(() => {
-          router.push("/auth/login");
+          router.push("/login");
         }, 1200);
       }
     } catch (err: any) {

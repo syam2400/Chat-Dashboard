@@ -29,8 +29,8 @@ router.post("/create", async (req, res) => {
         },
       },
       {
-        new: true,
-        upsert: true, // 🔥 creates if not exists
+       returnDocument: "after",
+       upsert: true, // 🔥 creates if not exists
       }
     );
 
@@ -40,32 +40,28 @@ router.post("/create", async (req, res) => {
   }
 });
 
+router.get("/messages/:conversationId", async (req, res) => {
+  const { conversationId } = req.params;
 
-// POST /api/chats/message/send
-router.post("messages/:conversationId", async (req, res) => {
-  const senderId = req.user.id;
-  const { conversationId, receiverId, text } = req.body;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
 
   try {
-    // 1. create message
-    const message = await Message.create({
-      conversationId,
-      senderId,
-      text,
-      seenBy: [senderId],
+    const messages = await Message.find({ conversationId })
+      .sort({ createdAt: -1 }) // latest first
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      success: true,
+      page,
+      limit,
+      messages
     });
 
-    // 2. update conversation metadata
-    await Conversation.findByIdAndUpdate(conversationId, {
-      lastMessage: text,
-      lastMessageAt: new Date(),
-    });
-
-    res.json(message);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 module.exports = router;

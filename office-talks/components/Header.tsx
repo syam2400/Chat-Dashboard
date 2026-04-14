@@ -52,6 +52,7 @@ const Header = () => {
   const [chatCount, setChatCount] = useState(0);
   const [filteredOnlineUsers, setFilteredOnlineUsers] = useState<any[]>([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [userNofications, setUserNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     const userDetails =
@@ -65,13 +66,17 @@ const Header = () => {
     const filtered = onlineUsers.filter(
       (u: any) => u.email !== currentUser?.email
     );
-
     setFilteredOnlineUsers(filtered);
     setChatCount(filtered.length);
-    setNotificationCount(notifications.length);
+
   }, [onlineUsers, currentUser, notifications]);
 
+useEffect(() => {
+    const userNotifs = notifications.filter((n:any) => n.user?.email !== currentUser?.email);
+    setUserNotifications(userNotifs);
+    setNotificationCount(userNotifs.length);
 
+}, [notifications, currentUser]);
 
   const openChatMenu = (event: React.MouseEvent<HTMLElement>) => {
     setChatAnchor(event.currentTarget);
@@ -280,10 +285,10 @@ const Header = () => {
             open={Boolean(notificationAnchor)}
             onClose={closeMenus}
           >
-            {notifications?.length === 0 ? (
+            {userNofications?.length === 0 ? (
               <MenuItem>No notifications</MenuItem>
             ) : (
-              notifications.slice(0, 5).map((notif: any, index: any) => (
+              userNofications.slice(0, 5).map((notif: any, index: any) => (
                 <MenuItem key={index}>
                   <Box>
                     <Typography fontSize="14px">

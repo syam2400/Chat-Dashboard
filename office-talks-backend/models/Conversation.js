@@ -27,6 +27,6 @@ const conversationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-conversationSchema.index({ members: 1 }, { unique: true });
+conversationSchema.index({ members: 1 });
 
 module.exports = mongoose.model("Conversation", conversationSchema);

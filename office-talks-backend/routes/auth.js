@@ -31,24 +31,9 @@ router.post('/signup', async (req, res) => {
 			password: hashedPassword
 		});
 
-		// Create token payload
-		const payload = {
-			userId: user._id,
-			name: user.name,
-			email: user.email
-		};
-
-		// Generate token
-		const token = jwt.sign(
-			payload,
-			process.env.JWT_SECRET,
-			{ expiresIn: '1h' }
-		);
-
 		// Send response
 		res.status(201).json({
 			success: true,
-			token,
 			user: {
 				id: user._id,
 				name: user.name,
@@ -56,20 +41,21 @@ router.post('/signup', async (req, res) => {
 			}
 		});
 
-// ✅ THEN send notification (safe)
-    try {
-      sendNotification({
-        type: "NEW_USER",
-        message: `${user.name} joined`,
-        user: {
-          id: user._id,
-          name: user.name
-        },
-        time: new Date()
+		// ✅ THEN send notification (safe)
+		try {
+			sendNotification({
+				type: "NEW_USER",
+				message: `${user.name} joined`,
+				user: {
+				  id: user._id,
+				  name: user.name,
+				  email: user.email
+				},
+				time: new Date()
       });
-    } catch (err) {
-      console.error("Notification error:", err);
-    }
+		} catch (err) {
+			console.error("Notification error:", err);
+		}
 
 	} catch (error) {
 		console.error(error);
@@ -125,16 +111,23 @@ router.post('/login', async (req, res) => {
 			}
 		});
 
-	  // ✅ REAL-TIME NOTIFICATION
-		// global.sendNotification({
-		// 	type: "USER_LOGIN",
-		// 	message: `${user.name} logged in`,
-		// 	user: {
-		// 		id: user._id,
-		// 		name: user.name
-		// 	},
-		// 	time: new Date()
-		// });
+		// ✅ THEN send notification (safe)
+		try {
+			// ✅ Notify all except this user
+			sendNotification({
+				type: "USER_LOGIN",
+				message: `${user.name} Just logged in`,
+				user: { 
+					 id: user._id, 
+					 name: user.name ,
+					 email: user.email
+					},
+				time: new Date()
+			});
+
+		} catch (err) {
+			console.error("Notification error:", err);
+		}
 
 	} catch (error) {
 		console.error(error);
