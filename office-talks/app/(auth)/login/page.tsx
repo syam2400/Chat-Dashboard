@@ -45,16 +45,9 @@ export default function LoginPage() {
       });
       const data = res.data;
       if (data?.token) {
-        // Store user info and token
-        // sessionStorage.setItem(
-        //   "User-Details",
-        //   JSON.stringify({
-        //     name: data.user?.name,
-        //     email: data.user?.email,
-        //     token: data.token,
-        //   })
-        // );
+
         login({
+            userId: data.user?.id,
             name: data.user?.name,
             email: data.user?.email,
             token: data.token,

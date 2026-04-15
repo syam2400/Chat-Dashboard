@@ -18,6 +18,7 @@ import SendIcon from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import EmojiEmotionsOutlinedIcon from "@mui/icons-material/EmojiEmotionsOutlined";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
+import { getSocket } from "@/lib/socket"; 
 
 interface Message {
   _id?: string;
@@ -38,6 +39,14 @@ interface User {
 export default function ChatPage() {
   const { userId } = useParams(); // route: /chat/[userId]
   const router = useRouter();
+  const [socket, setSocket] = useState<any>(null);
+
+    useEffect(() => {
+    const s = getSocket();
+    if (s) {
+        setSocket(s);
+    }
+    }, []);
 
   const [receiver, setReceiver] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -45,6 +54,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const getSession = () => {
     const raw =
@@ -56,8 +66,24 @@ export default function ChatPage() {
   const session = getSession();
   const token = session?.token;
   const myId = session?.userId || session?._id;
+ 
+  useEffect(() => {
+  if (!conversationId) return;
 
-  // Fetch receiver user info
+  socket.emit("join_room", conversationId);
+
+  socket.on("new_message", (message:any) => {
+    console.log("📨 New message:", message);
+    setMessages((prev) => [...prev, message]);
+  });
+
+  return () => {
+    socket.emit("leave_room", conversationId);
+    socket.off("new_message");
+  };
+}, [conversationId,socket]);
+
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -74,9 +100,10 @@ export default function ChatPage() {
     if (userId) fetchUser();
   }, [userId]);
 
-  // Fetch messages 
+  // Fetch chat container 
   useEffect(() => {
     const fetchMessages = async () => {
+      
         const payload = {
                         receiverId: userId
                         };
@@ -86,8 +113,9 @@ export default function ChatPage() {
          {
           headers: { Authorization: `Bearer ${token}` },
         });
+       const convId = res.data?._id || null;
+       setConversationId(convId|| null);
 
-        setMessages(res.data?.messages || []);
       } catch (err) {
         console.error(err);
       }
@@ -95,6 +123,22 @@ export default function ChatPage() {
     };
     if (userId) fetchMessages();
   }, [userId]);
+  
+  useEffect(()=>{
+    const fetchMessages = async () => {
+      try {
+        const res = await apiClient.get(`/api/chats/messages/${conversationId}`,
+         {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setMessages(res.data?.messages || []);
+      } catch (err) {
+        console.error(err);
+      }
+
+  }
+   if(conversationId) fetchMessages();
+},[conversationId])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -110,18 +154,16 @@ export default function ChatPage() {
       text: text.trim(),
       createdAt: new Date().toISOString(),
     };
+
     // Optimistic update
-    setMessages((prev) => [...prev, newMsg]);
+    // setMessages((prev) => [...prev, newMsg]);
     setText("");
-    try {
-      await apiClient.post(
-        `/api/messages/send`,
-        { receiverId: userId, text: newMsg.text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    } catch (err) {
-      console.error(err);
-    }
+      // ✅ send to socket
+    socket.emit("send_message", {
+        conversationId,
+        text: newMsg.text
+    });
+
     setSending(false);
   };
 

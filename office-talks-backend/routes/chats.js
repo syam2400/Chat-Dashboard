@@ -48,7 +48,7 @@ router.get("/messages/:conversationId", async (req, res) => {
 
   try {
     const messages = await Message.find({ conversationId })
-      .sort({ createdAt: -1 }) // latest first
+      .sort({ createdAt: 1 }) // old first
       .skip((page - 1) * limit)
       .limit(limit);
 

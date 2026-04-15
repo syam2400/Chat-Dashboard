@@ -28,26 +28,29 @@ export default function ChatHomePage() {
   const [search, setSearch] = useState("");
   const router = useRouter();
 
-  const getToken = () => {
+  const getUser = () => {
     const userDetails =
       sessionStorage.getItem("User-Details") ||
       localStorage.getItem("User-Details");
 
-    return userDetails ? JSON.parse(userDetails).token : null;
+    return userDetails ? JSON.parse(userDetails) : null;
   };
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = getToken();
+        const user = getUser();
+        const token = user.token;
 
         const res = await apiClient.get("/api/user/all-users", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        const usersData = res.data?.users || [];
+
         if (res.data?.users) {
           setUsers(res.data.users);
-          setFilteredUsers(res.data.users);
+          setFilteredUsers(usersData.filter((u: User) => u._id !== user.userId));
         }
       } catch (err) {
         console.error(err);
@@ -59,12 +62,18 @@ export default function ChatHomePage() {
     fetchUsers();
   }, []);
 
-  useEffect(() => {
-    const filtered = users.filter((user) =>
-      user.name?.toLowerCase().includes(search.toLowerCase())
+useEffect(() => {
+  const user = getUser();
+  const myId = user?.userId || user?._id;
+
+  const filtered = users
+    .filter((u) => u._id !== myId) // ✅ always exclude me
+    .filter((u) =>
+      u.name?.toLowerCase().includes(search.toLowerCase())
     );
-    setFilteredUsers(filtered);
-  }, [search, users]);
+
+  setFilteredUsers(filtered);
+}, [search, users]);
 
   if (loading) {
     return (

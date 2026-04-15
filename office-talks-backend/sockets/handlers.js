@@ -1,3 +1,6 @@
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
+
 const onlineUsers = new Map();
 
 module.exports = (io) => {
@@ -25,8 +28,12 @@ module.exports = (io) => {
 
         // ✅ Step 5 — Send message
     socket.on("send_message", async ({ conversationId, text }) => {
+      console.log(`✉️  Message from ${user?.userId} to ${conversationId}:`, text);
       try {
-        if (!text?.trim()) return;
+        if (!text?.trim()) {
+          console.log("⚠️ Empty message ignored");
+          return;
+        }
 
         const [message] = await Promise.all([
           Message.create({

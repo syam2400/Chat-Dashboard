@@ -20,8 +20,6 @@ export const disconnectSocket = () => {
 };
 
 export const getSocket = () => {
-  if (!socket) {
-    throw new Error("Socket not connected. Call connectSocket first.");
-  }
+
   return socket;
 };

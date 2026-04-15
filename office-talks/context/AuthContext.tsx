@@ -2,50 +2,100 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { disconnectSocket } from "@/lib/socket";
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
+import { connectSocket } from "@/lib/socket";
+import { Box, CircularProgress } from "@mui/material";
+
+export const isTokenExpired = (token: string) => {
+    try {
+        const decoded: any = jwtDecode(token);
+        return decoded.exp * 1000 < Date.now();
+    } catch {
+        return true;
+    }
+};
 
 const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }: any) => {
-    const [user, setUser] = useState<any>(() => {
-    // ✅ Runs synchronously — BEFORE first render
-    if (typeof window === "undefined") return null; // SSR guard
+    const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true); // 👈 important
 
-    const stored =
-      localStorage.getItem("User-Details") ||
-      sessionStorage.getItem("User-Details");
+    useEffect(() => {
+        const stored =  sessionStorage.getItem("User-Details") 
 
-    return stored ? JSON.parse(stored) : null;
-  });
- console.log("AuthProvider rendered, user:-------", user);
-//   useEffect(() => {
-//     const stored =
-//       sessionStorage.getItem("User-Details") ||
-//       localStorage.getItem("User-Details");
+        if (!stored) {
+            router.push("/login");
+            setLoading(false);
+            return;
+        }
 
-//     if (stored) setUser(JSON.parse(stored));
-//   }, []);
+        const parsed = JSON.parse(stored);
 
-  const login = (userData: any) => {
-    sessionStorage.setItem("User-Details", JSON.stringify(userData));
-      // ✅ 2. Save to cookie for middleware (server-side)
-    document.cookie = `auth-token=${userData.token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        if (!parsed?.token || isTokenExpired(parsed.token)) {
+            alert("Session expired. Please login again.");
+            sessionStorage.removeItem("User-Details");
 
-    setUser(userData); // 🔥 THIS triggers socket automatically
-  };
+            router.push("/login");
+            setLoading(false);
+            return;
+        }
 
-  const logout = () => {
-    sessionStorage.removeItem("User-Details");
-    document.cookie = "auth-token=; path=/; max-age=0";
+        setUser(parsed);
+        setLoading(false);
+    }, []);
 
-    disconnectSocket();
-    setUser(null);
-  };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    useEffect(() => {
+        if (!user?.token) return;
+
+        const socket = connectSocket(user.token);
+
+        return () => {
+            socket?.disconnect(); // cleanup
+        };
+    }, [user]);
+
+    const login = (userData: any) => {
+        sessionStorage.setItem("User-Details", JSON.stringify(userData));
+
+        document.cookie = `auth-token=${userData.token}; path=/; max-age=${60 * 60}`;
+
+        setUser(userData);
+    };
+
+    const logout = () => {
+        sessionStorage.removeItem("User-Details");
+
+        document.cookie = "auth-token=; path=/; max-age=0";
+
+        disconnectSocket();
+        setUser(null);
+
+        router.push("/login");
+    };
+
+    // ⛔ Prevent UI flicker before auth check
+    if (loading) {
+        return (
+            <Box
+                height="100vh"
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    return (
+        <AuthContext.Provider value={{ user, login, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
 
 export const useAuth = () => useContext(AuthContext);
