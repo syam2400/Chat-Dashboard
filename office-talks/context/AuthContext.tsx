@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: any) => {
         const stored =  sessionStorage.getItem("User-Details") 
 
         if (!stored) {
-            router.push("/login");
+            // router.replace("/login");
             setLoading(false);
             return;
         }
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: any) => {
             alert("Session expired. Please login again.");
             sessionStorage.removeItem("User-Details");
 
-            router.push("/login");
+            // router.replace("/login");
             setLoading(false);
             return;
         }
@@ -74,7 +74,8 @@ export const AuthProvider = ({ children }: any) => {
         disconnectSocket();
         setUser(null);
 
-        router.push("/login");
+        router.replace("/login");
+        window.location.reload();
     };
 
     // ⛔ Prevent UI flicker before auth check

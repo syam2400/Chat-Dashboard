@@ -8,9 +8,11 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow access to login page always
-  if (pathname === "/login" || pathname === "/signup") {
-    return NextResponse.next();
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+
+  // ✅ If logged in → block login/signup
+  if (token && isAuthPage) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Allow access to static files, next internals, images etc
@@ -23,7 +25,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If no token → redirect to login
-  if (!token) {
+  if (!token && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

@@ -19,9 +19,10 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { apiClient } from "../../../lib/api";
 import { useState } from "react";
-import { useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext"
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,40 +33,51 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (loading) return;
     if (!email || !password) {
       setError("Please enter email and password");
       return;
     }
+    setLoading(true);
     try {
-      const res = await apiClient.post("/api/auth/login", {
-        email,
-        password,
-      });
+
+      const res = await apiClient.post("/api/auth/login",
+        {
+          email,
+          password,
+        },
+        { timeout: 30000 });
       const data = res.data;
       if (data?.token) {
 
         login({
-            userId: data.user?.id,
-            name: data.user?.name,
-            email: data.user?.email,
-            token: data.token,
-          });
-          
+          userId: data.user?.id,
+          name: data.user?.name,
+          email: data.user?.email,
+          token: data.token,
+        });
+
         setToastMsg("Login successful!");
         setToastOpen(true);
         setTimeout(() => {
-          router.push("/");
+          router.replace("/");
         }, 800);
       } else {
         setError("Login failed: No token returned");
       }
     } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.response?.data || err.message;
-      setError(message || "Login failed");
-    }
+      if (err.code === "ECONNABORTED") {
+        setToastMsg("Request timed out");
+        setToastOpen(true);
+      } else {
+        setError(err.response?.data?.message || "Login failed");
+      }
+    }finally {
+    setLoading(false);
+  }
   };
 
   return (
@@ -122,7 +134,7 @@ export default function LoginPage() {
               variant="outlined"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              InputLabelProps={{ shrink: true }} 
+              InputLabelProps={{ shrink: true }}
             />
 
             {/* Password */}
@@ -133,7 +145,7 @@ export default function LoginPage() {
               variant="outlined"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              InputLabelProps={{ shrink: true }} 
+              InputLabelProps={{ shrink: true }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -155,6 +167,7 @@ export default function LoginPage() {
               variant="contained"
               size="large"
               onClick={handleLogin}
+              disabled={loading}
               sx={{
                 background: "#3b82f6",
                 padding: "10px",
@@ -162,7 +175,7 @@ export default function LoginPage() {
                 fontSize: "16px",
               }}
             >
-              Login
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
             </Button>
 
             <Typography variant="body2">
@@ -172,9 +185,10 @@ export default function LoginPage() {
             <Toast
               open={toastOpen}
               message={toastMsg}
-              severity="success"
+              severity={toastMsg.includes("successful") ? "success" : "error"}
               onClose={() => setToastOpen(false)}
             />
+
 
           </Stack>
 
